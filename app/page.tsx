@@ -18,6 +18,7 @@ export default function Page() {
   ])
   const [loading, setLoading] = useState(false)
   const [theme, setTheme] = useState<Theme>('light')
+  const [showReactionMenu, setShowReactionMenu] = useState<{messageId: number, x: number, y: number} | null>(null)
 
   // Theme persistence
   useEffect(() => {
@@ -89,6 +90,13 @@ export default function Page() {
       }
       return msg
     }))
+    setShowReactionMenu(null)
+  }
+
+  const handleMessageClick = (e: React.MouseEvent, messageId: number) => {
+    if (e.detail === 2) { // Double click
+      setShowReactionMenu({ messageId, x: e.clientX, y: e.clientY })
+    }
   }
 
   const themes = [
@@ -157,38 +165,29 @@ export default function Page() {
       <div className="flex-1 max-w-3xl mx-auto w-full p-4 space-y-4">
         {messages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-3 rounded-2xl ${
-              msg.isUser 
-                ? (theme === 'dark' ? 'bg-blue-600 text-white' : 
-                   theme === 'pink' ? 'bg-pink-500 text-white' : 
-                   'bg-blue-500 text-white')
-                : (theme === 'dark' ? 'bg-gray-700 text-white' : 
-                   theme === 'pink' ? 'bg-white text-gray-900' : 
-                   'bg-white text-gray-900 shadow-sm')
-            }`}>
+            <div 
+              className={`max-w-[80%] p-3 rounded-2xl cursor-pointer ${
+                msg.isUser 
+                  ? (theme === 'dark' ? 'bg-blue-600 text-white' : 
+                     theme === 'pink' ? 'bg-pink-500 text-white' : 
+                     'bg-blue-500 text-white')
+                  : (theme === 'dark' ? 'bg-gray-700 text-white' : 
+                     theme === 'pink' ? 'bg-white text-gray-900' : 
+                     'bg-white text-gray-900 shadow-sm')
+              }`}
+              onDoubleClick={(e) => handleMessageClick(e, msg.id)}
+              title="Çift tıklayarak emoji ekle"
+            >
               <p className="text-sm mb-2">{msg.text}</p>
               
               {/* Reactions */}
-              <div className="flex items-center gap-1 flex-wrap">
-                {msg.reactions?.map((reaction, idx) => (
-                  <span key={idx} className="text-xs">{reaction}</span>
-                ))}
-                
-                {/* Reaction Buttons */}
-                <div className="flex items-center gap-1 ml-2">
-                  {reactions.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => addReaction(msg.id, emoji)}
-                      className={`text-xs p-1 rounded hover:bg-gray-200 transition-colors ${
-                        msg.reactions?.includes(emoji) ? 'bg-gray-200' : ''
-                      }`}
-                    >
-                      {emoji}
-                    </button>
+              {msg.reactions && msg.reactions.length > 0 && (
+                <div className="flex items-center gap-1 flex-wrap mt-2">
+                  {msg.reactions.map((reaction, idx) => (
+                    <span key={idx} className="text-xs">{reaction}</span>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         ))}
@@ -215,6 +214,37 @@ export default function Page() {
           </div>
         )}
       </div>
+
+      {/* Reaction Menu */}
+      {showReactionMenu && (
+        <div 
+          className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2"
+          style={{ 
+            left: Math.min(showReactionMenu.x, window.innerWidth - 200),
+            top: Math.min(showReactionMenu.y, window.innerHeight - 100)
+          }}
+        >
+          <div className="flex gap-1">
+            {reactions.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => addReaction(showReactionMenu.messageId, emoji)}
+                className="p-2 hover:bg-gray-100 rounded text-lg"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Click outside to close reaction menu */}
+      {showReactionMenu && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowReactionMenu(null)}
+        />
+      )}
 
       {/* Input */}
       <div className={`border-t p-4 ${
