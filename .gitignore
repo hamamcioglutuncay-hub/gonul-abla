@@ -6,3 +6,4 @@ out
 .DS_Store
 playwright-report
 blob-report
+.vercel

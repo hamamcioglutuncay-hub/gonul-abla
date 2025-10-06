@@ -20,7 +20,7 @@ export default function Chat() {
 
   useEffect(() => {
     // hydrate persistence
-    const unsub = require('@/store/useChatStore').useChatPersistence?.()
+      const unsub = require('@/store/useChatStore').useChatPersistence?.()
     return () => { if (typeof unsub === 'function') unsub() }
   }, [])
 
